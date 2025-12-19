@@ -4,7 +4,7 @@
 PROJECT     := hyper
 CXX         := g++
 CXXFLAGS    := -std=c++14 -Wall -Wextra -O2
-LDFLAGS     := -lcryptopp -lsqlite3 -lleveldb
+LDFLAGS     := -lcryptopp -lsqlite3 -lleveldb -Iinclude
 
 SRC_DIR     := src
 BIN_DIR     := bin

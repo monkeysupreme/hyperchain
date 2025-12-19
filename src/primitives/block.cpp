@@ -56,3 +56,14 @@ void CBlockHeader::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
     ExtraData = Serializer::ReadBytes(in, offset);
     ExtraDataHash = Serializer::ReadUint256(in, offset);
 }
+
+void CBlock::Serialize(std::vector<uint8_t>& out) const
+{
+    CBlockHeader::Serialize(out);
+    Serializer::WriteUint256(out, Hash);
+}
+
+void CBlock::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
+{
+    Hash = Serializer::ReadUint256(in, offset);
+}

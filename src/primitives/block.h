@@ -38,11 +38,16 @@ public:
 class CBlock : public CBlockHeader
 {
 public:
+    uint256 Hash;
+
     explicit CBlock(const CBlockHeader& header)
     {
         Nullify();
         *(static_cast<CBlockHeader*>(this)) = header;
     }
+
+    void Serialize(std::vector<uint8_t>& out) const override;
+    void Deserialize(const std::vector<uint8_t>& in, size_t& offset) override;
 };
 
 #endif //HYPERCHAIN_BLOCK_H

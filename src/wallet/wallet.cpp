@@ -54,6 +54,31 @@ std::vector<uint8_t> CWallet::GetPublicKeyBytes() const
     return Keys.PublicKey;
 }
 
+uint64_t CWallet::GetTransactionCount() const
+{
+    return Information.TotalNonce;
+}
+
+CAmount CWallet::GetBalance() const
+{
+    return Information.Balance;
+}
+
+uint64_t CWallet::GetBalanceWei() const
+{
+    return Information.Balance.ToWei();
+}
+
+void CWallet::Nullify()
+{
+    Information.TotalNonce = 0;
+    Information.Address = "";
+    Information.Balance = CAmount();
+    Keys.PublicKey.clear();
+    Keys.PrivateKey.clear();
+    mAnnotation = "";
+}
+
 void CWallet::Dump() const
 {
     std::vector<uint8_t> out;
