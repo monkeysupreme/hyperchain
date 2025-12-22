@@ -4,12 +4,31 @@
 
 #include "transaction.h"
 
-bool CTxInfo::Empty() const
+
+void CTxData::Empty()
 {
-    return ExtraData.empty();
+    Version = 0;
+    Time = 0;
+    Nonce = 0;
+    ToAddr = uint256();
+    FromAddr = uint256();
+    Value.SetValue(0);
+
+    GasLimit = 0;
+    GasUsed = 0;
+    GasPrice = 0;
+
+    ExtraData.clear();
+    ExtraDataHash = uint256();
 }
 
-void CTxInfo::Serialize(std::vector<uint8_t>& out) const
+bool CTxData::IsEmpty() const
+{
+    return Version == 0 && Time == 0 && Nonce == 0 && Value.GetValue() == 0;
+}
+
+
+void CTxData::Serialize(std::vector<uint8_t>& out) const
 {
     Serializer::WriteUint64(out, Version);
     Serializer::WriteUint64(out, Time);
@@ -18,7 +37,7 @@ void CTxInfo::Serialize(std::vector<uint8_t>& out) const
     Serializer::WriteUint64(out, GasPrice);
 }
 
-void CTxInfo::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
+void CTxData::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
 {
     Version = Serializer::ReadUint64(in, offset);
     Time = Serializer::ReadUint64(in, offset);
@@ -27,18 +46,24 @@ void CTxInfo::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
     GasPrice = Serializer::ReadUint64(in, offset);
 }
 
-void CTransaction::SetData(const CTxInfo& data)
+void CTransaction::SetData(const CTxData& data)
 {
-    if (TxData.Empty())
+    if (TxData.IsEmpty())
     {
         TxData = data;
     }
 }
 
-CTxInfo CTransaction::GetData()
+CTxData CTransaction::GetData() const
 {
     return TxData;
 }
+
+void CTransaction::SetGasLimit(uint64_t gasInWei)
+{
+    TxData.GasLimit = gasInWei;
+}
+
 
 void CTransaction::Serialize(std::vector<uint8_t>& out) const
 {
@@ -52,7 +77,7 @@ void CTransaction::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
     TxID = Serializer::ReadUint256(in, offset);
 }
 
-CTransaction MakeTransaction(const CTxInfo& data)
+CTransaction CreateTransaction(const CTxData& data)
 {
     CTransaction tx;
     tx.SetData(data);
@@ -71,4 +96,19 @@ uint256 HashTransaction(CKeccak256& k, const CTransaction& tx)
 std::string GetTxHashString(const uint256& hash_bytes)
 {
     return hash_bytes.ToHex();
+}
+
+uint64_t CalcGasUsed(const CTransaction& tx)
+{
+    return tx.TxData.GasUsed > 0 ? tx.TxData.GasUsed : tx.TxData.GasLimit;
+}
+
+uint64_t CalcGasPrice(const CTransaction& tx)
+{
+    return tx.TxData.GasPrice;
+}
+
+__uint128_t CalcTotalGasCost(const CTransaction& tx)
+{
+    return static_cast<__uint128_t>(CalcGasUsed(tx)) * CalcGasPrice(tx);
 }

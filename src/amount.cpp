@@ -1,40 +1,41 @@
-//
-// Created by caleb on 12/19/25.
-//
-
 #include "amount.h"
-#include <stdexcept>
 
 CAmount::CAmount() : mValue(0)
 {
 }
-
-CAmount::CAmount(uint64_t value)
+CAmount::CAmount(uint64_t value) : mValue(value)
 {
-    SetValue(value);
+}
+CAmount::CAmount(__uint128_t value) : mValue(value)
+{
 }
 
-void CAmount::SetValue(uint64_t value)
+void CAmount::SetValue(__uint128_t value)
 {
-    if (value > UINT64_MAX / WEI_PER_ETHER)
-    {
-        throw std::overflow_error("amount overflow");
-    }
-
     mValue = value;
 }
-
-uint64_t CAmount::GetValue() const
+__uint128_t CAmount::GetValue() const
 {
     return mValue;
 }
 
-uint64_t CAmount::ToWei() const
+void CAmount::FromHype(double hype)
 {
-    return mValue * WEI_PER_ETHER;
+    mValue = static_cast<__uint128_t>(hype * 1e18);
 }
-
-uint64_t CAmount::ToHype() const
+double CAmount::ToHype() const
+{
+    return static_cast<double>(mValue) / 1e18;
+}
+__uint128_t CAmount::ToWei() const
 {
     return mValue;
+}
+
+void CAmount::Add(const CAmount& other)
+{
+    __uint128_t sum = mValue + other.mValue;
+    if (sum < mValue)
+        throw std::overflow_error("CAmount overflow");
+    mValue = sum;
 }

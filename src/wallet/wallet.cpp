@@ -2,30 +2,30 @@
 // Created by caleb on 12/17/25.
 //
 
-#include <iostream>
-
 #include "wallet.h"
 
-#include "../crypto/keys.h"
 #include "../crypto/keccak.h"
+#include "../crypto/keys.h"
+#include "address.h"
 
-CWallet::CWallet() : mWalletDatabase(CKeyValueDatabase("walletdata"))
+#include <stdexcept>
+#include <utility>
+
+CWallet::CWallet() = default;
+
+CWallet::CWallet(std::string annotation)
+    : mAnnotation(std::move(annotation))
 {
-}
-
-CWallet::CWallet(const std::string& annotation) : mWalletDatabase(CKeyValueDatabase(annotation))
-{
-    mAnnotation = annotation;
-
-    Information.Address = CKeccak256().Hash256("Hello World").ToHex();
-
     Information.TotalNonce = 0;
+    Information.Address = BytesToAddress(Keys.PublicKey);
 }
 
 bool CWallet::LoadPrivateKeyFromBytes(const std::vector<uint8_t>& privKeyBytes)
 {
     if (privKeyBytes.size() != 32)
+    {
         return false;
+    }
 
     try
     {
@@ -69,22 +69,48 @@ uint64_t CWallet::GetBalanceWei() const
     return Information.Balance.ToWei();
 }
 
+std::string CWallet::GetAnnotation() const
+{
+    return mAnnotation;
+}
+
 void CWallet::Nullify()
 {
     Information.TotalNonce = 0;
-    Information.Address = "";
+    Information.Address.clear();
     Information.Balance = CAmount();
-    Keys.PublicKey.clear();
     Keys.PrivateKey.clear();
-    mAnnotation = "";
+    Keys.PublicKey.clear();
+    mAnnotation.clear();
+    mPath.clear();
+    mWalletDatabase.reset();
+}
+
+void CWallet::SetPath(const std::string& path)
+{
+    mPath = path;
+    mWalletDatabase = std::make_unique<CKeyValueDatabase>(mPath);
+}
+
+std::string CWallet::GetPath() const
+{
+    return mPath;
 }
 
 void CWallet::Dump() const
 {
+    if (!mWalletDatabase)
+    {
+        throw std::runtime_error("Wallet database not initialized");
+    }
+
     std::vector<uint8_t> out;
     Serialize(out);
-    mWalletDatabase.Put(leveldb::Slice(Information.Address), leveldb::Slice(ToHex(out)));
-    std::cout << "Wallet '" << mAnnotation << "' dumped to /" << mAnnotation << "\n";
+
+    mWalletDatabase->Put(
+        leveldb::Slice(Information.Address),
+        leveldb::Slice(ToHex(out))
+    );
 }
 
 void CWallet::Serialize(std::vector<uint8_t>& out) const
@@ -98,7 +124,7 @@ void CWallet::Serialize(std::vector<uint8_t>& out) const
 void CWallet::Deserialize(const std::vector<uint8_t>& in, size_t& offset)
 {
     Keys.PrivateKey = Serializer::ReadBytes(in, offset);
-    Keys.PublicKey  = Serializer::ReadBytes(in, offset);
+    Keys.PublicKey = Serializer::ReadBytes(in, offset);
     Information.TotalNonce = Serializer::ReadUint64(in, offset);
-    Information.Address    = Serializer::ReadString(in, offset);
+    Information.Address = Serializer::ReadString(in, offset);
 }

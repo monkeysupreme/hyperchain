@@ -1,14 +1,16 @@
 #ifndef HYPERCHAIN_WALLET_H
 #define HYPERCHAIN_WALLET_H
 
-#include "amount.h"
 #include "../storage/db.h"
 #include "../util/serialization.h"
+#include "../amount.h"
 #include "keypair.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
+#include <sstream>
 
 struct CWalletInfo
 {
@@ -24,37 +26,43 @@ public:
     CWalletInfo Information;
 
     CWallet();
-    explicit CWallet(const std::string& annotation);
+    explicit CWallet(std::string annotation);
 
     bool LoadPrivateKeyFromBytes(const std::vector<uint8_t>& privKeyBytes);
 
     std::vector<uint8_t> GetPrivateKeyBytes() const;
     std::vector<uint8_t> GetPublicKeyBytes() const;
 
-    // Returns Information.TotalNonce - just a transaction counter.
-    // TotalNonce means no two transactions can have the same nonce
-    // thus avoiding double spending. If TotalNonce is seen twice
-    // it will reject.
     uint64_t GetTransactionCount() const;
 
-    // Returns balance in HYPE
     CAmount GetBalance() const;
     uint64_t GetBalanceWei() const;
 
-    // Nullify just empties the wallet and reverts it back to
-    // state of instantiation.
+    std::string GetAnnotation() const;
+
     void Nullify();
 
-    // Save the wallet to leveldb
     void Dump() const;
+
+    void SetPath(const std::string& path);
+    std::string GetPath() const;
 
     void Serialize(std::vector<uint8_t>& out) const override;
     void Deserialize(const std::vector<uint8_t>& in, size_t& offset) override;
 
 private:
     std::string mAnnotation;
-    CKeyValueDatabase mWalletDatabase;
+    std::string mPath;
+    std::unique_ptr<CKeyValueDatabase> mWalletDatabase;
 };
 
-#endif // HYPERCHAIN_WALLET_H
+inline std::string GenerateWalletDumpPath(
+    const std::string& annotation,
+    const std::vector<uint8_t>& pubKeyBytes)
+{
+    std::stringstream ss;
+    ss << "w-" << annotation << "-" << ToHex(pubKeyBytes);
+    return ss.str();
+}
 
+#endif // HYPERCHAIN_WALLET_H
