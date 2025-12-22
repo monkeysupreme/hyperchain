@@ -47,6 +47,8 @@ public:
     void SetPath(const std::string& path);
     std::string GetPath() const;
 
+
+
     void Serialize(std::vector<uint8_t>& out) const override;
     void Deserialize(const std::vector<uint8_t>& in, size_t& offset) override;
 

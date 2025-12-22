@@ -1,13 +1,23 @@
 #include "block-packager.h"
 #include "../primitives/block.h"
 
-#include <sstream>
 #include <ctime>
+#include <iostream>
+#include <sstream>
 
 CBlockFile::CBlockFile(const std::string& pkgHash, int pkgTime)
     : mPkgHash(pkgHash), mPkgTime(pkgTime)
 {
-    FileOutputStream.open(AssembleLabel(), std::ios::binary);
+    CreateFileDirectory();
+    FileOutputStream.open("blockdata/disk/" + AssembleLabel(), std::ios::binary);
+}
+
+void CBlockFile::CreateFileDirectory()
+{
+    if (mkdir("blockdata/disk", 0777) == 0)
+    {
+        std::cout << "Blocks will be saved to /blockdata/disk directory" << "\n";
+    }
 }
 
 std::string CBlockFile::AssembleLabel() const

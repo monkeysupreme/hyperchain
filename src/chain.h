@@ -4,6 +4,7 @@
 #include "primitives/block.h"
 #include "storage/block-packager.h"
 #include "storage/block-store.h"
+#include "transaction-pool.h"
 
 class CBlockChain
 {
@@ -27,6 +28,7 @@ private:
 private:
     CBlockPackager mPackager;
     CBlockStore mBlockStore;
+    CTransactionPool mTxPool;
 };
 
 #endif

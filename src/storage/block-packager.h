@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include <sys/stat.h>
 
 class CBlock;
 
@@ -13,6 +14,7 @@ public:
     std::ofstream FileOutputStream;
 
 private:
+    void CreateFileDirectory();
     std::string AssembleLabel() const;
 
 private:

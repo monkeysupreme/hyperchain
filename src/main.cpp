@@ -3,7 +3,7 @@
 #include <iostream>
 int main()
 {
-    CBlockChain chain = CBlockChain("blockchain-data");
+    CBlockChain chain = CBlockChain("blockdata");
 
     if (chain.HasGenesis)
     {
